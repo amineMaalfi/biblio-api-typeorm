@@ -12,7 +12,7 @@ export class LibrarianGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{ user?: AuthUser }>();
     const user = request.user;
     if (!user?.isLibrarian) {
-      throw new ForbiddenException('Librarian role required');
+      throw new ForbiddenException('Rôle bibliothécaire requis.');
     }
     return true;
   }

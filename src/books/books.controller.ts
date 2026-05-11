@@ -30,7 +30,7 @@ export class BooksController {
   async findOnePublic(@Param('id', ParseUUIDPipe) id: string) {
     const book = await this.booksService.findOne(id);
     if (!book) {
-      throw new NotFoundException('Book not found');
+      throw new NotFoundException('Livre introuvable.');
     }
     return this.booksService.toPublic(book);
   }

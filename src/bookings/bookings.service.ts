@@ -33,25 +33,20 @@ export class BookingsService {
       for (const line of dto.items) {
         const book = await bookRepo.findOne({ where: { id: line.bookId } });
         if (!book) {
-          throw new NotFoundException(`Book not found: ${line.bookId}`);
+          throw new NotFoundException(`Livre introuvable : ${line.bookId}`);
         }
         if (book.stock <= 0) {
-          throw new BadRequestException(`No stock for book: ${book.title}`);
-        }
-        let expected: number;
-        try {
-          expected = this.borrowingRules.expectedLineTotal(
-            book.priceDh,
-            line.durationDays,
-          );
-        } catch {
           throw new BadRequestException(
-            `Unsupported duration: ${line.durationDays} days`,
+            `Plus d’exemplaire disponible pour « ${book.title} ».`,
           );
         }
+        const expected = this.borrowingRules.expectedLineTotal(
+          book.priceDh,
+          line.durationDays,
+        );
         if (Math.abs(line.finalPriceDh - expected) > 0.01) {
           throw new BadRequestException(
-            `Price mismatch for "${book.title}": expected ${expected} DH, got ${line.finalPriceDh} DH`,
+            `Montant incorrect pour « ${book.title} » : attendu ${expected} DH, reçu ${line.finalPriceDh} DH.`,
           );
         }
 
@@ -116,13 +111,15 @@ export class BookingsService {
         relations: ['book', 'user'],
       });
       if (!booking) {
-        throw new NotFoundException('Booking not found');
+        throw new NotFoundException('Emprunt introuvable.');
       }
       if (!actor.isLibrarian && booking.userId !== actor.id) {
-        throw new ForbiddenException('Not allowed for this booking');
+        throw new ForbiddenException(
+          'Vous n’êtes pas autorisé à modifier cet emprunt.',
+        );
       }
       if (booking.status !== BookingStatus.ACTIVE) {
-        throw new BadRequestException('Booking is not active');
+        throw new BadRequestException('Cet emprunt n’est plus actif.');
       }
 
       const book = await bookRepo.findOne({ where: { id: booking.bookId } });

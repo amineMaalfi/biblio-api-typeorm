@@ -35,7 +35,7 @@ export class SeedService implements OnModuleInit {
       this.config.get<string>('LIBRARIAN_FULL_NAME') ?? 'Bibliothécaire';
     if (!email || !password) {
       this.logger.warn(
-        'No librarian user seeded: set LIBRARIAN_EMAIL and LIBRARIAN_PASSWORD in .env',
+        'Aucun compte bibliothécaire créé : renseignez LIBRARIAN_EMAIL et LIBRARIAN_PASSWORD dans le fichier .env.',
       );
       return;
     }
@@ -48,7 +48,7 @@ export class SeedService implements OnModuleInit {
         isLibrarian: true,
       }),
     );
-    this.logger.log(`Seeded librarian account for ${email}`);
+    this.logger.log(`Compte bibliothécaire initial créé : ${email}`);
   }
 
   private async seedBooksIfEmpty(): Promise<void> {
@@ -69,6 +69,6 @@ export class SeedService implements OnModuleInit {
       }),
     );
     await this.books.save(rows);
-    this.logger.log(`Seeded ${rows.length} books`);
+    this.logger.log(`${rows.length} livres ajoutés au catalogue initial.`);
   }
 }

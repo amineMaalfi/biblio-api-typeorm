@@ -1,18 +1,20 @@
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
-  @IsString()
-  @MinLength(1)
+  @IsString({ message: 'Le nom complet est requis.' })
+  @MinLength(1, { message: 'Le nom complet est requis.' })
   fullName: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'Adresse e-mail invalide.' })
   email: string;
 
-  @IsString()
-  @MinLength(8)
+  @IsString({ message: 'Le mot de passe est requis.' })
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 8 caractères.',
+  })
   password: string;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Le secret bibliothécaire doit être une chaîne.' })
   librarianSecret?: string;
 }
