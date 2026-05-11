@@ -94,6 +94,19 @@ export class BookingsService {
   }
 
   async cancel(bookingId: string, actor: AuthUser) {
+    return this.releaseBooking(bookingId, actor, BookingStatus.CANCELLED);
+  }
+
+  /** Physical return: frees stock like cancel but marks RETURNED (for librarian stats / UX). */
+  async returnBook(bookingId: string, actor: AuthUser) {
+    return this.releaseBooking(bookingId, actor, BookingStatus.RETURNED);
+  }
+
+  private async releaseBooking(
+    bookingId: string,
+    actor: AuthUser,
+    terminalStatus: BookingStatus.CANCELLED | BookingStatus.RETURNED,
+  ) {
     return this.dataSource.transaction(async (manager) => {
       const bookingRepo = manager.getRepository(Booking);
       const bookRepo = manager.getRepository(Book);
@@ -106,7 +119,7 @@ export class BookingsService {
         throw new NotFoundException('Booking not found');
       }
       if (!actor.isLibrarian && booking.userId !== actor.id) {
-        throw new ForbiddenException('You can only cancel your own bookings');
+        throw new ForbiddenException('Not allowed for this booking');
       }
       if (booking.status !== BookingStatus.ACTIVE) {
         throw new BadRequestException('Booking is not active');
@@ -117,7 +130,7 @@ export class BookingsService {
         book.stock += 1;
         await bookRepo.save(book);
       }
-      booking.status = BookingStatus.CANCELLED;
+      booking.status = terminalStatus;
       await bookingRepo.save(booking);
       return this.present(booking);
     });
