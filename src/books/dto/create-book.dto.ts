@@ -11,41 +11,41 @@ import {
 } from 'class-validator';
 
 export class CreateBookDto {
-  @IsString()
-  @MinLength(1)
+  @IsString({ message: 'Le titre est requis.' })
+  @MinLength(1, { message: 'Le titre est requis.' })
   title: string;
 
-  @IsString()
-  @MinLength(1)
+  @IsString({ message: 'L’auteur est requis.' })
+  @MinLength(1, { message: 'L’auteur est requis.' })
   author: string;
 
   @Type(() => Number)
-  @IsNumber()
-  @Min(0)
+  @IsNumber({}, { message: 'Le prix doit être un nombre.' })
+  @Min(0, { message: 'Le prix ne peut pas être négatif.' })
   priceDh: number;
 
-  @IsString()
-  @MinLength(1)
+  @IsString({ message: 'La catégorie est requise.' })
+  @MinLength(1, { message: 'La catégorie est requise.' })
   category: string;
 
   @Type(() => Number)
-  @IsInt()
-  @Min(0)
+  @IsInt({ message: 'Le stock doit être un nombre entier.' })
+  @Min(0, { message: 'Le stock ne peut pas être négatif.' })
   stock: number;
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(5)
+  @IsInt({ message: 'La note doit être un nombre entier.' })
+  @Min(1, { message: 'La note doit être comprise entre 1 et 5.' })
+  @Max(5, { message: 'La note doit être comprise entre 1 et 5.' })
   rating?: number;
 
-  @IsString()
-  @MinLength(1)
+  @IsString({ message: 'L’URL de l’image est requise.' })
+  @MinLength(1, { message: 'L’URL de l’image est requise.' })
   imageUrl: string;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Le résumé doit être une chaîne de caractères.' })
   summary?: string;
 }
 

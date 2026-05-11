@@ -28,6 +28,14 @@ export class BookingsController {
     return this.bookingsService.findForUser(user);
   }
 
+  @Post(':id/return')
+  returnBook(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.bookingsService.returnBook(id, user);
+  }
+
   @Delete(':id')
   cancel(
     @CurrentUser() user: AuthUser,

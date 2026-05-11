@@ -33,25 +33,20 @@ export class BookingsService {
       for (const line of dto.items) {
         const book = await bookRepo.findOne({ where: { id: line.bookId } });
         if (!book) {
-          throw new NotFoundException(`Book not found: ${line.bookId}`);
+          throw new NotFoundException(`Livre introuvable : ${line.bookId}`);
         }
         if (book.stock <= 0) {
-          throw new BadRequestException(`No stock for book: ${book.title}`);
-        }
-        let expected: number;
-        try {
-          expected = this.borrowingRules.expectedLineTotal(
-            book.priceDh,
-            line.durationDays,
-          );
-        } catch {
           throw new BadRequestException(
-            `Unsupported duration: ${line.durationDays} days`,
+            `Plus d’exemplaire disponible pour « ${book.title} ».`,
           );
         }
+        const expected = this.borrowingRules.expectedLineTotal(
+          book.priceDh,
+          line.durationDays,
+        );
         if (Math.abs(line.finalPriceDh - expected) > 0.01) {
           throw new BadRequestException(
-            `Price mismatch for "${book.title}": expected ${expected} DH, got ${line.finalPriceDh} DH`,
+            `Montant incorrect pour « ${book.title} » : attendu ${expected} DH, reçu ${line.finalPriceDh} DH.`,
           );
         }
 
@@ -94,6 +89,19 @@ export class BookingsService {
   }
 
   async cancel(bookingId: string, actor: AuthUser) {
+    return this.releaseBooking(bookingId, actor, BookingStatus.CANCELLED);
+  }
+
+  /** Physical return: frees stock like cancel but marks RETURNED (for librarian stats / UX). */
+  async returnBook(bookingId: string, actor: AuthUser) {
+    return this.releaseBooking(bookingId, actor, BookingStatus.RETURNED);
+  }
+
+  private async releaseBooking(
+    bookingId: string,
+    actor: AuthUser,
+    terminalStatus: BookingStatus.CANCELLED | BookingStatus.RETURNED,
+  ) {
     return this.dataSource.transaction(async (manager) => {
       const bookingRepo = manager.getRepository(Booking);
       const bookRepo = manager.getRepository(Book);
@@ -103,13 +111,15 @@ export class BookingsService {
         relations: ['book', 'user'],
       });
       if (!booking) {
-        throw new NotFoundException('Booking not found');
+        throw new NotFoundException('Emprunt introuvable.');
       }
       if (!actor.isLibrarian && booking.userId !== actor.id) {
-        throw new ForbiddenException('You can only cancel your own bookings');
+        throw new ForbiddenException(
+          'Vous n’êtes pas autorisé à modifier cet emprunt.',
+        );
       }
       if (booking.status !== BookingStatus.ACTIVE) {
-        throw new BadRequestException('Booking is not active');
+        throw new BadRequestException('Cet emprunt n’est plus actif.');
       }
 
       const book = await bookRepo.findOne({ where: { id: booking.bookId } });
@@ -117,7 +127,7 @@ export class BookingsService {
         book.stock += 1;
         await bookRepo.save(book);
       }
-      booking.status = BookingStatus.CANCELLED;
+      booking.status = terminalStatus;
       await bookingRepo.save(booking);
       return this.present(booking);
     });

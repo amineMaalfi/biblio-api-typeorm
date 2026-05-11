@@ -69,7 +69,7 @@ export class BooksService {
   async update(id: string, dto: UpdateBookDto): Promise<Book> {
     const book = await this.books.findOne({ where: { id } });
     if (!book) {
-      throw new NotFoundException('Book not found');
+      throw new NotFoundException('Livre introuvable.');
     }
     if (dto.title !== undefined) book.title = dto.title;
     if (dto.author !== undefined) book.author = dto.author;
@@ -85,14 +85,14 @@ export class BooksService {
   async remove(id: string): Promise<void> {
     const book = await this.books.findOne({ where: { id } });
     if (!book) {
-      throw new NotFoundException('Book not found');
+      throw new NotFoundException('Livre introuvable.');
     }
     const active = await this.bookings.count({
       where: { bookId: id, status: BookingStatus.ACTIVE },
     });
     if (active > 0) {
       throw new BadRequestException(
-        'Cannot delete a book that has active bookings',
+        'Impossible de supprimer un livre qui a des emprunts actifs.',
       );
     }
     await this.books.remove(book);

@@ -23,7 +23,7 @@ export class AuthService {
     const email = dto.email.toLowerCase();
     const existing = await this.usersService.findByEmail(email);
     if (existing) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Cette adresse e-mail est déjà utilisée.');
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const librarianEnv = this.config.get<string>('LIBRARIAN_REGISTRATION_SECRET');
@@ -44,11 +44,11 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmail(dto.email.toLowerCase());
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Identifiants incorrects.');
     }
     const ok = await bcrypt.compare(dto.password, user.password);
     if (!ok) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Identifiants incorrects.');
     }
     return this.issueToken(user.id);
   }

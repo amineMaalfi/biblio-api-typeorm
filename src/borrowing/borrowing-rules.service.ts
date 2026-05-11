@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -13,7 +13,9 @@ export class BorrowingRulesService {
   extraFeeForDuration(days: number): number {
     const map = this.parseDurationFees();
     if (!(days in map)) {
-      throw new Error(`Unsupported loan duration: ${days}`);
+      throw new BadRequestException(
+        `Durée d’emprunt non prise en charge : ${days} jours.`,
+      );
     }
     return map[days];
   }
